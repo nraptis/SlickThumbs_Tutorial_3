@@ -11,21 +11,20 @@ class MyPageViewModel: ObservableObject {
     
     private static let fetchCount = 6
     private static let probeAheadOrBehindAmountForPrefetch = 5
-    private static let probeAheadOrBehindAmountForDownloads = 5
     
     static func mock() -> MyPageViewModel {
         return MyPageViewModel()
     }
     
     init() {
-        downloader.delegate = self
         layout.delegate = self
+        downloader.delegate = self
         fetch(at: 4, withCount: Self.fetchCount) { _ in }
     }
     
     private let model = MyPageModel()
-    private let downloader = PriorityDataDownloader(numberOfSimultaneousDownloads: 2)
     let layout = GridLayout()
+    private let downloader = PriorityDataDownloader(numberOfSimultaneousDownloads: 2)
     private(set) var isFetching = false
     
     func numberOfThumbCells() -> Int {
@@ -60,30 +59,10 @@ class MyPageViewModel: ObservableObject {
         }
     }
     
-    private func loadUpDownloaderWithTasks() {
-        var firstCellIndexOnScreen = layout.firstCellIndexOnScreen()
-        var lastCellIndexOnScreen = layout.lastCellIndexOnScreen()
-        
-        if lastCellIndexOnScreen <= 0 { return }
-        guard firstCellIndexOnScreen < lastCellIndexOnScreen else { return }
-        guard firstCellIndexOnScreen < model.totalExpectedCount else { return }
-        
-        firstCellIndexOnScreen -= Self.probeAheadOrBehindAmountForDownloads
-        lastCellIndexOnScreen += Self.probeAheadOrBehindAmountForDownloads
-        
-        for cellIndex in firstCellIndexOnScreen...lastCellIndexOnScreen {
-            if let thumbModel = thumbModel(at: cellIndex), !didThumbSucceedToDownload(at: cellIndex) {
-                downloader.addDownloadTask(thumbModel)
-            }
-        }
-    }
-    
     // Could be called very often...
     private func fetchMoreThumbsIfNecessary() {
         
-        defer {
-            loadUpDownloaderWithTasks()
-        }
+        loadUpDownloaderWithTasks()
         
         if isFetching { return }
         
@@ -134,46 +113,23 @@ class MyPageViewModel: ObservableObject {
         }
     }
     
-    func refreshInlineOnBackgroundThread() {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        self.fetch(at: 4, withCount: Self.fetchCount) { _ in
-            dispatchGroup.leave()
-        }
-        dispatchGroup.wait()
-    }
-    
-    private func postUpdate() {
-        if Thread.isMainThread {
-            self.objectWillChange.send()
-        } else {
-            DispatchQueue.main.sync {
-                self.objectWillChange.send()
-            }
-        }
-    }
-    
-    func refresh() async {
-        clear()
-        postUpdate()
+    private func loadUpDownloaderWithTasks() {
         
-        let task = Task.detached {
-            self.refreshInlineOnBackgroundThread()
+        let firstIndexOnScreen = layout.firstCellIndexOnScreen()
+        let lastIndexOnScreen = layout.lastCellIndexOnScreen()
+        
+        if lastIndexOnScreen < firstIndexOnScreen { return }
+        
+        var index = firstIndexOnScreen
+        while index <= lastIndexOnScreen {
+            if let thumbModel = model.thumbModel(at: index), !didThumbSucceedToDownload(index) {
+                downloader.addDownloadTask(thumbModel)
+            }
+            index += 1
         }
-        _ = await task.result
+        
+        downloader.startTasksIfNeeded()
     }
-    
-}
-
-extension MyPageViewModel {
-    func isThumbDownloading(at index: Int) -> Bool {
-        return model.isThumbDownloading(at: index)
-    }
-    
-    func didThumbSucceedToDownload(at index: Int) -> Bool {
-        model.didThumbSucceedToDownload(at: index)
-    }
-    
 }
 
 extension MyPageViewModel: GridLayoutDelegate {
@@ -186,12 +142,35 @@ extension MyPageViewModel: GridLayoutDelegate {
     }
 }
 
+extension MyPageViewModel {
+    func isThumbDownloading(_ index: Int) -> Bool {
+        return model.isThumbDownloading(index)
+    }
+    
+    func didThumbFailToDownload(_ index: Int) -> Bool {
+        return model.didThumbFailToDownload(index)
+    }
+
+    func didThumbSucceedToDownload(_ index: Int) -> Bool {
+        return model.didThumbSucceedToDownload(index)
+    }
+}
+
 extension MyPageViewModel: PriorityDataDownloaderDelegate {
-    func dataDownloadSuccess(_ thumbModel: ThumbModel) {
-        print("Data Download Succeeded: \(thumbModel.image)")
-        model.notifyDataDownloadDidSucceed(thumbModel)
-        loadUpDownloaderWithTasks()
+    func dataDownloadDidStart(_ thumbModel: ThumbModel) {
+        model.notifyDataDownloadDidStart(thumbModel)
         objectWillChange.send()
     }
     
+    func dataDownloadSuccess(_ thumbModel: ThumbModel) {
+        model.notifyDataDownloadSuccess(thumbModel)
+        objectWillChange.send()
+        self.loadUpDownloaderWithTasks()
+    }
+    
+    func dataDownloadFailure(_ thumbModel: ThumbModel) {
+        model.notifyDataDownloadFailure(thumbModel)
+        objectWillChange.send()
+        self.loadUpDownloaderWithTasks()
+    }
 }

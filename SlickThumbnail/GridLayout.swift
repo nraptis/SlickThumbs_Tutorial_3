@@ -58,7 +58,7 @@ class GridLayout {
     
     private var _scrollContentFrame = CGRect.zero
     
-    func registerContainer(_ containerGeometry: GeometryProxy, _ numberOfElements: Int) -> Bool {
+    func registerContainer(_ containerGeometry: GeometryProxy, _ numberOfElements: Int) {
         
         let newContainerFrameInsetBySafeArea = containerGeometry.frame(in: .global)
         
@@ -85,9 +85,7 @@ class GridLayout {
             _containerFrameWithoutSafeArea = newContainerFrameWithoutSafeArea
             _numberOfElements = numberOfElements
             layoutGrid()
-            return true
         }
-        return false
     }
     
     func registerScrollContent(_ scrollContentGeometry: GeometryProxy) {

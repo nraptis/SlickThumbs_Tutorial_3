@@ -7,20 +7,17 @@
 
 import Foundation
 
-struct ThumbModel: Equatable {
-    
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.index == rhs.index
-    }
+struct ThumbModel {
     
     static func mock() -> ThumbModel {
-        return ThumbModel(index: 0, image: "🧫", downloadDidSucceed: false, downloadDidFail: false)
+        return ThumbModel(index: 0, image: "🧫")
     }
     
     let index: Int
     let image: String
-    
-    // Wrapper, not part of purist JSON model
+}
+
+struct ThumbDownloadStatus {
     var downloadDidSucceed: Bool
     var downloadDidFail: Bool
 }

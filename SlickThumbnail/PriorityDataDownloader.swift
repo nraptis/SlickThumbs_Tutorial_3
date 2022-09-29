@@ -2,63 +2,55 @@
 //  PriorityDataDownloader.swift
 //  SlickThumbnail
 //
-//  Created by Nick Raptis on 9/25/22.
+//  Created by Nick Raptis on 9/28/22.
 //
 
 import Foundation
 
 protocol PriorityDataDownloaderDelegate: AnyObject {
+    func dataDownloadDidStart(_ thumbModel: ThumbModel)
     func dataDownloadSuccess(_ thumbModel: ThumbModel)
+    func dataDownloadFailure(_ thumbModel: ThumbModel)
 }
 
 class PriorityDataDownloader {
-    
-    weak var delegate: PriorityDataDownloaderDelegate?
     
     private let numberOfSimultaneousDownloads: Int
     init(numberOfSimultaneousDownloads: Int) {
         self.numberOfSimultaneousDownloads = numberOfSimultaneousDownloads
     }
     
-    private var taskList = [PriorityDataTask]()
+    weak var delegate: PriorityDataDownloaderDelegate?
+    private(set) var taskList = [PriorityDataDownloaderTask]()
+    private var _numberOfActiveDownloads = 0
     
     func addDownloadTask(_ thumbModel: ThumbModel) {
-        if doesTaskExist(for: thumbModel) { return }
-        let newTask = PriorityDataTask(thumbModel: thumbModel, downloader: self)
-        taskList.append(newTask)
-        startTasksIfNeeded()
-    }
-    
-    func removeDownloadTask(_ thumbModel: ThumbModel) {
-        if let taskIndex = index(for: thumbModel) {
-            taskList.remove(at: taskIndex)
+        if doesTaskExist(thumbModel) == false {
+            let newTask = PriorityDataDownloaderTask(self, thumbModel)
+            taskList.append(newTask)
         }
     }
     
-    func index(for thumbModel: ThumbModel) -> Int? {
-        for taskIndex in taskList.indices {
-            if taskList[taskIndex].index == thumbModel.index {
-                return taskIndex
+    func removeDownloadTask(_ thumbModel: ThumbModel) {
+        if let index = taskIndex(thumbModel) {
+            taskList.remove(at: index)
+        }
+    }
+    
+    private func doesTaskExist(_ thumbModel: ThumbModel) -> Bool {
+        return taskIndex(thumbModel) != nil
+    }
+
+    private func taskIndex(_ thumbModel: ThumbModel) -> Int? {
+        for index in taskList.indices {
+            if taskList[index].index == thumbModel.index {
+                return index
             }
         }
         return nil
     }
     
-    func doesTaskExist(for thumbModel: ThumbModel) -> Bool {
-        return index(for: thumbModel) != nil
-    }
-    
-    private var numberOfActiveDownloads = 0
-    private func computeNumberOfActiveDownloads() {
-        numberOfActiveDownloads = 0
-        for task in taskList {
-            if task.active {
-                numberOfActiveDownloads += 1
-            }
-        }
-    }
-    
-    private func chooseTaskToStart() -> PriorityDataTask? {
+    private func chooseTaskToStart() -> PriorityDataDownloaderTask? {
         for task in taskList {
             if task.active == false {
                 return task
@@ -67,27 +59,38 @@ class PriorityDataDownloader {
         return nil
     }
     
-    private func startTasksIfNeeded() {
-        while numberOfActiveDownloads < numberOfSimultaneousDownloads {
+    func startTasksIfNeeded() {
+        while _numberOfActiveDownloads < numberOfSimultaneousDownloads {
             if let task = chooseTaskToStart() {
                 task.start()
                 computeNumberOfActiveDownloads()
+                delegate?.dataDownloadDidStart(task.thumbModel)
             } else {
                 return
             }
         }
     }
     
+    private func computeNumberOfActiveDownloads() {
+        _numberOfActiveDownloads = 0
+        for task in taskList {
+            if task.active {
+                _numberOfActiveDownloads += 1
+            }
+        }
+    }
 }
 
-// Task responses...
 extension PriorityDataDownloader {
-    
-    func handleTaskDidSucceed(_ task: PriorityDataTask) {
+    func handleTaskDidSucceed(_ task: PriorityDataDownloaderTask) {
         removeDownloadTask(task.thumbModel)
         computeNumberOfActiveDownloads()
         delegate?.dataDownloadSuccess(task.thumbModel)
-        startTasksIfNeeded()
     }
-    
+
+    func handleTaskDidFail(_ task: PriorityDataDownloaderTask) {
+        removeDownloadTask(task.thumbModel)
+        computeNumberOfActiveDownloads()
+        delegate?.dataDownloadFailure(task.thumbModel)
+    }
 }

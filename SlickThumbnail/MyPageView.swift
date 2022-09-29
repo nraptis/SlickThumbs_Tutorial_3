@@ -12,9 +12,6 @@ struct MyPageView: View {
     var body: some View {
         GeometryReader { containerGeometry in
             list(containerGeometry)
-                .refreshable {
-                    await viewModel.refresh()
-                }
         }
     }
     
@@ -26,18 +23,14 @@ struct MyPageView: View {
             ThumbView(thumbModel: viewModel.thumbModel(at: cellModel.index),
                       width: layout.getWidth(cellModel.index),
                       height: layout.getHeight(cellModel.index),
-                      didDownloadSucceed: viewModel.didThumbSucceedToDownload(at: cellModel.index),
-                      didDownloadFail: false)
+                      downloadDidSucceed: viewModel.didThumbSucceedToDownload(cellModel.index),
+                      downloadDidFail: viewModel.didThumbFailToDownload(cellModel.index))
         }
     }
     
     private func list(_ containerGeometry: GeometryProxy) -> some View {
         let layout = viewModel.layout
-        if layout.registerContainer(containerGeometry, viewModel.numberOfThumbCells()) {
-            DispatchQueue.main.async {
-                self.viewModel.objectWillChange.send()
-            }
-        }
+        layout.registerContainer(containerGeometry, viewModel.numberOfThumbCells())
         return List {
             GeometryReader { scrollContentGeometry in
                 grid(containerGeometry, scrollContentGeometry)

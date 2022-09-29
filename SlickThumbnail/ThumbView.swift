@@ -12,8 +12,9 @@ struct ThumbView: View {
     let thumbModel: ThumbModel?
     let width: CGFloat
     let height: CGFloat
-    let didDownloadSucceed: Bool
-    let didDownloadFail: Bool
+    let downloadDidSucceed: Bool
+    let downloadDidFail: Bool
+    
     
     private static let tileBackground = RoundedRectangle(cornerRadius: 12)
     
@@ -47,11 +48,23 @@ struct ThumbView: View {
         .background(Self.tileBackground.fill().foregroundColor(.gray).opacity(0.5))
     }
     
+    private func failedContent() -> some View {
+        ZStack {
+            Image(systemName: "xmark.circle.fill")
+                .font(.system(size: 46).bold())
+                .foregroundColor(.white)
+        }
+        .frame(width: CGFloat(width), height: height)
+        .background(Self.tileBackground.fill().foregroundColor(.red))
+    }
+    
     @ViewBuilder
     var body: some View {
         if let thumbModel = thumbModel {
-            if didDownloadSucceed {
+            if downloadDidSucceed {
                 thumbContent(thumbModel)
+            } else if downloadDidFail {
+                failedContent()
             } else {
                 downloadingContent()
             }
@@ -66,7 +79,7 @@ struct ThumbView_Previews: PreviewProvider {
         ThumbView(thumbModel: ThumbModel.mock(),
                   width: 100,
                   height: 140,
-                  didDownloadSucceed: false,
-                  didDownloadFail: false)
+                  downloadDidSucceed: false,
+                  downloadDidFail: false)
     }
 }

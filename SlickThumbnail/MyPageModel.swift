@@ -16,6 +16,7 @@ class MyPageModel {
     private let allEmojis = "🚙🤗🦊🪗🪕🎻🐻‍❄️🚘🚕🏈⚾️🙊🙉🌲😄😁😆🚖🏎🚚🛻🎾🏐🥏🏓🥁😋🛩🚁🦓🦍🦧😌😛😎🥸🤩🦬🐃🦙🐐☹️😣😖😭🦣🦏🐪⛴🚢🚂🚝🚅😟😕🙁😤🎺🐎🐖🐏🐑🐶🐱🐭🍀🍁🍄🌾☁️🌦🌧⛈😅😂🤣🥲☺️🚛🚐🚓🥺😢🦎🦖🦕🥰😘😗😙🛸🚲☔️🐻🐼🐘🦛😍😚😠😡🤯💦🌊☂️🚤🛥🛳🚆🦇🐢🐍🐅🐆🛫🛬🏍🛶⛵️😳🥶😥🚗😓🐨🐯🦅🦉🐫🦒🙃😉🥳😏🐓🐁❄️💨💧🐰🦁🐮🥌🏂😔🏀⚽️🎼🎤🎹🪘🐥🐣🐂🐄🐵🙈🤭🤫🥀🌨🌫🦮🐈🦤😯😧✈️🚊🚔😝😜🤪🤨🐀🐒🦆🧐🤓🕊🦝🦨🦡😫😩🚉😴🤮🌺🌸😬🙄🥱🚀🚇🛺😞🤥😷🦌🐕🌴🌿☘️☀️🌤⛅️🌥😀😃🐩🦢🥅⛷🎳🚑🚒🚜🌷🌹🌼😇🙂🤧🦘🦩🦫🦦😊🤒🤠🐹🐷🐸🐲🌩🌪🦙🐐🦥🐿🦔💐🌻⛳️"
     
     private var thumbModelList = [ThumbModel?]()
+    private var thumbDownloadStatusList = [ThumbDownloadStatus]()
     
     func thumbModel(at index: Int) -> ThumbModel? {
         if index >= 0 && index < thumbModelList.count {
@@ -45,14 +46,14 @@ class MyPageModel {
         while thumbModelList.count < newCapacity {
             thumbModelList.append(nil)
         }
+        while thumbDownloadStatusList.count < newCapacity {
+            thumbDownloadStatusList.append(ThumbDownloadStatus(downloadDidSucceed: false, downloadDidFail: false))
+        }
         
         var index = index
         while index < newCapacity {
             if index >= 0 && index < emojisArray.count, thumbModelList[index] == nil {
-                let newModel = ThumbModel(index: index,
-                                          image: String(emojisArray[index]),
-                                          downloadDidSucceed: false,
-                                          downloadDidFail: false)
+                let newModel = ThumbModel(index: index, image: String(emojisArray[index]))
                 thumbModelList[index] = newModel
             }
             index += 1
@@ -69,34 +70,49 @@ class MyPageModel {
         }
     }
     
-    func notifyDataDownloadDidSucceed(_ thumbModel: ThumbModel) {
-        if let index = index(for: thumbModel) {
-            thumbModelList[index]?.downloadDidSucceed = true
-            thumbModelList[index]?.downloadDidFail = false
+    func notifyDataDownloadSuccess(_ thumbModel: ThumbModel) {
+        if thumbModel.index >= 0 && thumbModel.index < thumbDownloadStatusList.count {
+            print("Download of [\(thumbModel.image)] => Success!")
+            thumbDownloadStatusList[thumbModel.index].downloadDidSucceed = true
+            thumbDownloadStatusList[thumbModel.index].downloadDidFail = false
+        }
+    }
+
+    func notifyDataDownloadFailure(_ thumbModel: ThumbModel) {
+        if thumbModel.index >= 0 && thumbModel.index < thumbDownloadStatusList.count {
+            print("Download of [\(thumbModel.image)] => Failed!")
+            thumbDownloadStatusList[thumbModel.index].downloadDidSucceed = false
+            thumbDownloadStatusList[thumbModel.index].downloadDidFail = true
+        }
+    }
+
+    func notifyDataDownloadDidStart(_ thumbModel: ThumbModel) {
+        if thumbModel.index >= 0 && thumbModel.index < thumbDownloadStatusList.count {
+            print("Download of [\(thumbModel.image)] => Started!")
+            thumbDownloadStatusList[thumbModel.index].downloadDidSucceed = false
+            thumbDownloadStatusList[thumbModel.index].downloadDidFail = false
         }
     }
     
-    func index(for thumbModel: ThumbModel) -> Int? {
-        for thumbIndex in thumbModelList.indices {
-            if let checkThumbModel = thumbModelList[thumbIndex], checkThumbModel == thumbModel {
-                return thumbIndex
-            }
-        }
-        return nil
-    }
-    
-    func isThumbDownloading(at index: Int) -> Bool {
-        if let thumbModel = thumbModel(at: index) {
-            if thumbModel.downloadDidSucceed { return false }
-            if thumbModel.downloadDidFail { return false }
+    func isThumbDownloading(_ index: Int) -> Bool {
+        if index >= 0 && index < thumbDownloadStatusList.count {
+            if thumbDownloadStatusList[index].downloadDidSucceed { return false }
+            if thumbDownloadStatusList[index].downloadDidFail { return false }
             return true
         }
         return false
     }
-    
-    func didThumbSucceedToDownload(at index: Int) -> Bool {
-        if let thumbModel = thumbModel(at: index) {
-            if thumbModel.downloadDidSucceed { return true }
+
+    func didThumbFailToDownload(_ index: Int) -> Bool {
+        if index >= 0 && index < thumbDownloadStatusList.count {
+            if thumbDownloadStatusList[index].downloadDidFail { return true }
+        }
+        return false
+    }
+
+    func didThumbSucceedToDownload(_ index: Int) -> Bool {
+        if index >= 0 && index < thumbDownloadStatusList.count {
+            if thumbDownloadStatusList[index].downloadDidSucceed { return true }
         }
         return false
     }
