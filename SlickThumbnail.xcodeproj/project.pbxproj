@@ -15,8 +15,8 @@
 		0D1F0EBC28DE874600EFB1AA /* MyPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1F0EBB28DE874600EFB1AA /* MyPageModel.swift */; };
 		0D1F0EC428DE932C00EFB1AA /* GridLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1F0EC328DE932C00EFB1AA /* GridLayout.swift */; };
 		0D1F0ECC28DEB8D300EFB1AA /* ThumbGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1F0ECB28DEB8D300EFB1AA /* ThumbGrid.swift */; };
-		0DA05CDB28E52903008C0534 /* PriorityDataDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DA05CDA28E52903008C0534 /* PriorityDataDownloader.swift */; };
-		0DA05CDD28E5291C008C0534 /* PriorityDataDownloaderTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DA05CDC28E5291C008C0534 /* PriorityDataDownloaderTask.swift */; };
+		0D4F487B28E7D46C00E66EFF /* PriorityDataDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F487A28E7D46C00E66EFF /* PriorityDataDownloader.swift */; };
+		0D4F487D28E7D50C00E66EFF /* PriorityDataDownloaderTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F487C28E7D50C00E66EFF /* PriorityDataDownloaderTask.swift */; };
 		0DE43B7728E1049800FFF873 /* ThumbModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE43B7628E1049800FFF873 /* ThumbModel.swift */; };
 		0DE43B7928E110FD00FFF873 /* ThumbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE43B7828E110FD00FFF873 /* ThumbView.swift */; };
 /* End PBXBuildFile section */
@@ -31,8 +31,8 @@
 		0D1F0EBB28DE874600EFB1AA /* MyPageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPageModel.swift; sourceTree = "<group>"; };
 		0D1F0EC328DE932C00EFB1AA /* GridLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLayout.swift; sourceTree = "<group>"; };
 		0D1F0ECB28DEB8D300EFB1AA /* ThumbGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbGrid.swift; sourceTree = "<group>"; };
-		0DA05CDA28E52903008C0534 /* PriorityDataDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityDataDownloader.swift; sourceTree = "<group>"; };
-		0DA05CDC28E5291C008C0534 /* PriorityDataDownloaderTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityDataDownloaderTask.swift; sourceTree = "<group>"; };
+		0D4F487A28E7D46C00E66EFF /* PriorityDataDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityDataDownloader.swift; sourceTree = "<group>"; };
+		0D4F487C28E7D50C00E66EFF /* PriorityDataDownloaderTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityDataDownloaderTask.swift; sourceTree = "<group>"; };
 		0DE43B7628E1049800FFF873 /* ThumbModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbModel.swift; sourceTree = "<group>"; };
 		0DE43B7828E110FD00FFF873 /* ThumbView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -67,8 +67,8 @@
 		0D1F0EA828DE870D00EFB1AA /* SlickThumbnail */ = {
 			isa = PBXGroup;
 			children = (
-				0DA05CDA28E52903008C0534 /* PriorityDataDownloader.swift */,
-				0DA05CDC28E5291C008C0534 /* PriorityDataDownloaderTask.swift */,
+				0D4F487A28E7D46C00E66EFF /* PriorityDataDownloader.swift */,
+				0D4F487C28E7D50C00E66EFF /* PriorityDataDownloaderTask.swift */,
 				0DE43B7828E110FD00FFF873 /* ThumbView.swift */,
 				0DE43B7628E1049800FFF873 /* ThumbModel.swift */,
 				0D1F0ECB28DEB8D300EFB1AA /* ThumbGrid.swift */,
@@ -161,9 +161,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0DA05CDB28E52903008C0534 /* PriorityDataDownloader.swift in Sources */,
+				0D4F487B28E7D46C00E66EFF /* PriorityDataDownloader.swift in Sources */,
 				0D1F0EAA28DE870D00EFB1AA /* SlickThumbnailApp.swift in Sources */,
-				0DA05CDD28E5291C008C0534 /* PriorityDataDownloaderTask.swift in Sources */,
+				0D4F487D28E7D50C00E66EFF /* PriorityDataDownloaderTask.swift in Sources */,
 				0D1F0EB828DE872A00EFB1AA /* MyPageView.swift in Sources */,
 				0D1F0EC428DE932C00EFB1AA /* GridLayout.swift in Sources */,
 				0DE43B7728E1049800FFF873 /* ThumbModel.swift in Sources */,

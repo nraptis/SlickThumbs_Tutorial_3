@@ -23,8 +23,8 @@ struct MyPageView: View {
             ThumbView(thumbModel: viewModel.thumbModel(at: cellModel.index),
                       width: layout.getWidth(cellModel.index),
                       height: layout.getHeight(cellModel.index),
-                      downloadDidSucceed: viewModel.didThumbSucceedToDownload(cellModel.index),
-                      downloadDidFail: viewModel.didThumbFailToDownload(cellModel.index))
+                      downloadDidSucceed: viewModel.didThumbDownloadSucceed(cellModel.index),
+                      downloadDidFail: viewModel.didThumbDownloadFail(cellModel.index))
         }
     }
     

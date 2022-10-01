@@ -2,52 +2,59 @@
 //  PriorityDataDownloader.swift
 //  SlickThumbnail
 //
-//  Created by Nick Raptis on 9/28/22.
+//  Created by Nick Raptis on 9/30/22.
 //
 
 import Foundation
 
 protocol PriorityDataDownloaderDelegate: AnyObject {
     func dataDownloadDidStart(_ thumbModel: ThumbModel)
-    func dataDownloadSuccess(_ thumbModel: ThumbModel)
-    func dataDownloadFailure(_ thumbModel: ThumbModel)
+    func dataDownloadDidSucceed(_ thumbModel: ThumbModel)
+    func dataDownloadDidFail(_ thumbModel: ThumbModel)
 }
 
 class PriorityDataDownloader {
+    
+    weak var delegate: PriorityDataDownloaderDelegate?
     
     private let numberOfSimultaneousDownloads: Int
     init(numberOfSimultaneousDownloads: Int) {
         self.numberOfSimultaneousDownloads = numberOfSimultaneousDownloads
     }
     
-    weak var delegate: PriorityDataDownloaderDelegate?
     private(set) var taskList = [PriorityDataDownloaderTask]()
     private var _numberOfActiveDownloads = 0
     
     func addDownloadTask(_ thumbModel: ThumbModel) {
-        if doesTaskExist(thumbModel) == false {
-            let newTask = PriorityDataDownloaderTask(self, thumbModel)
-            taskList.append(newTask)
-        }
+        guard !doesTaskExist(thumbModel) else { return }
+        
+        let newTask = PriorityDataDownloaderTask(self, thumbModel)
+        taskList.append(newTask)
+        computeNumberOfActiveDownloads()
     }
     
     func removeDownloadTask(_ thumbModel: ThumbModel) {
-        if let index = taskIndex(thumbModel) {
-            taskList.remove(at: index)
-        }
+        guard let index = taskIndex(thumbModel) else { return }
+        taskList.remove(at: index)
+        computeNumberOfActiveDownloads()
     }
     
-    private func doesTaskExist(_ thumbModel: ThumbModel) -> Bool {
-        return taskIndex(thumbModel) != nil
-    }
-
+    func doesTaskExist(_ thumbModel: ThumbModel) -> Bool { taskIndex(thumbModel) != nil }
+    
     private func taskIndex(_ thumbModel: ThumbModel) -> Int? {
-        for index in taskList.indices {
-            if taskList[index].index == thumbModel.index {
-                return index
-            }
+        for (index, task) in taskList.enumerated() {
+            if task.thumbModelIndex == thumbModel.index { return index }
         }
         return nil
+    }
+    
+    private func computeNumberOfActiveDownloads() {
+        _numberOfActiveDownloads = 0
+        for task in taskList {
+            if task.active == true {
+                _numberOfActiveDownloads += 1
+            }
+        }
     }
     
     private func chooseTaskToStart() -> PriorityDataDownloaderTask? {
@@ -59,38 +66,36 @@ class PriorityDataDownloader {
         return nil
     }
     
-    func startTasksIfNeeded() {
+    func startTasksIfNecessary() {
         while _numberOfActiveDownloads < numberOfSimultaneousDownloads {
             if let task = chooseTaskToStart() {
+                // start the task!
                 task.start()
                 computeNumberOfActiveDownloads()
                 delegate?.dataDownloadDidStart(task.thumbModel)
             } else {
+                // there are no tasks to start, must exit!
                 return
             }
+            
         }
+        
     }
     
-    private func computeNumberOfActiveDownloads() {
-        _numberOfActiveDownloads = 0
-        for task in taskList {
-            if task.active {
-                _numberOfActiveDownloads += 1
-            }
-        }
-    }
 }
 
 extension PriorityDataDownloader {
-    func handleTaskDidSucceed(_ task: PriorityDataDownloaderTask) {
+    
+    func handleDownloadTaskDidSucceed(_ task: PriorityDataDownloaderTask) {
         removeDownloadTask(task.thumbModel)
         computeNumberOfActiveDownloads()
-        delegate?.dataDownloadSuccess(task.thumbModel)
+        delegate?.dataDownloadDidSucceed(task.thumbModel)
     }
-
-    func handleTaskDidFail(_ task: PriorityDataDownloaderTask) {
+    
+    func handleDownloadTaskDidFail(_ task: PriorityDataDownloaderTask) {
         removeDownloadTask(task.thumbModel)
         computeNumberOfActiveDownloads()
-        delegate?.dataDownloadFailure(task.thumbModel)
+        delegate?.dataDownloadDidFail(task.thumbModel)
     }
+    
 }

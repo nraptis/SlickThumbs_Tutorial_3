@@ -10,7 +10,7 @@ import SwiftUI
 class MyPageViewModel: ObservableObject {
     
     private static let fetchCount = 6
-    private static let probeAheadOrBehindAmountForPrefetch = 5
+    private static let probeAheadOrBehindRangeForPrefetch = 5
     
     static func mock() -> MyPageViewModel {
         return MyPageViewModel()
@@ -59,7 +59,6 @@ class MyPageViewModel: ObservableObject {
         }
     }
     
-    // Could be called very often...
     private func fetchMoreThumbsIfNecessary() {
         
         loadUpDownloaderWithTasks()
@@ -69,44 +68,37 @@ class MyPageViewModel: ObservableObject {
         let firstCellIndexOnScreen = layout.firstCellIndexOnScreen()
         let lastCellIndexOnScreen = layout.lastCellIndexOnScreen()
         
-        if lastCellIndexOnScreen <= 0 { return }
-        guard firstCellIndexOnScreen < lastCellIndexOnScreen else { return }
-        guard firstCellIndexOnScreen < model.totalExpectedCount else { return }
-        
-        // Case 1: Is there any missing data from the cells on screen?
+        // Case 1: Cells directly on screen
         var checkIndex = firstCellIndexOnScreen
         while checkIndex <= lastCellIndexOnScreen {
-            // Are we in range? (Greater than 0) (Will not cause infinite re-fetch loop (Very Important))
             if checkIndex >= 0 && checkIndex < model.totalExpectedCount {
-                // Is the data missing here? If so, start a new fetch from checkIndex
                 if thumbModel(at: checkIndex) == nil {
                     fetch(at: checkIndex, withCount: Self.fetchCount) { _ in }
+                    return
                 }
             }
             checkIndex += 1
         }
         
-        // Case 2: Is there any missing data slightly after the cells on screen?
+        // Case 2: Cells shortly after screen's range of indices
         checkIndex = lastCellIndexOnScreen + 1
-        while checkIndex < (lastCellIndexOnScreen + Self.probeAheadOrBehindAmountForPrefetch) {
-            // Are we in range? (Greater than 0) (Will not cause infinite re-fetch loop (Very Important))
+        while checkIndex <= (lastCellIndexOnScreen + Self.probeAheadOrBehindRangeForPrefetch) {
             if checkIndex >= 0 && checkIndex < model.totalExpectedCount {
-                // Is the data missing here? If so, start a new fetch from checkIndex
                 if thumbModel(at: checkIndex) == nil {
                     fetch(at: checkIndex, withCount: Self.fetchCount) { _ in }
+                    return
                 }
             }
             checkIndex += 1
         }
         
-        // Case 3: Is there any missing data slightly before the cells on screen?
-        checkIndex = firstCellIndexOnScreen - Self.probeAheadOrBehindAmountForPrefetch
+        // Case 3: Cells shortly before screen's range of indices
+        checkIndex = firstCellIndexOnScreen - Self.probeAheadOrBehindRangeForPrefetch
         while checkIndex < firstCellIndexOnScreen {
-            // Are we in range? (Greater than 0) (Will not cause infinite re-fetch loop (Very Important))
             if checkIndex >= 0 && checkIndex < model.totalExpectedCount {
-                // Is the data missing here? If so, start a new fetch from checkIndex
                 if thumbModel(at: checkIndex) == nil {
                     fetch(at: checkIndex, withCount: Self.fetchCount) { _ in }
+                    return
                 }
             }
             checkIndex += 1
@@ -115,21 +107,28 @@ class MyPageViewModel: ObservableObject {
     
     private func loadUpDownloaderWithTasks() {
         
-        let firstIndexOnScreen = layout.firstCellIndexOnScreen()
-        let lastIndexOnScreen = layout.lastCellIndexOnScreen()
+        let firstCellIndexOnScreen = layout.firstCellIndexOnScreen()
+        let lastCellIndexOnScreen = layout.lastCellIndexOnScreen()
         
-        if lastIndexOnScreen < firstIndexOnScreen { return }
-        
-        var index = firstIndexOnScreen
-        while index <= lastIndexOnScreen {
-            if let thumbModel = model.thumbModel(at: index), !didThumbSucceedToDownload(index) {
+        for cellIndex in firstCellIndexOnScreen...lastCellIndexOnScreen {
+            if let thumbModel = thumbModel(at: cellIndex), !didThumbDownloadSucceed(cellIndex) {
                 downloader.addDownloadTask(thumbModel)
             }
-            index += 1
         }
         
-        downloader.startTasksIfNeeded()
+        // compute the priorities
+        
+        downloader.startTasksIfNecessary()
     }
+    
+    func didThumbDownloadSucceed(_ index: Int) -> Bool {
+        return model.didThumbDownloadSucceed(index)
+    }
+    
+    func didThumbDownloadFail(_ index: Int) -> Bool {
+        return model.didThumbDownloadFail(index)
+    }
+    
 }
 
 extension MyPageViewModel: GridLayoutDelegate {
@@ -142,35 +141,24 @@ extension MyPageViewModel: GridLayoutDelegate {
     }
 }
 
-extension MyPageViewModel {
-    func isThumbDownloading(_ index: Int) -> Bool {
-        return model.isThumbDownloading(index)
-    }
-    
-    func didThumbFailToDownload(_ index: Int) -> Bool {
-        return model.didThumbFailToDownload(index)
-    }
-
-    func didThumbSucceedToDownload(_ index: Int) -> Bool {
-        return model.didThumbSucceedToDownload(index)
-    }
-}
-
 extension MyPageViewModel: PriorityDataDownloaderDelegate {
     func dataDownloadDidStart(_ thumbModel: ThumbModel) {
-        model.notifyDataDownloadDidStart(thumbModel)
+        model.notifyDataDownloadStart(thumbModel)
         objectWillChange.send()
     }
     
-    func dataDownloadSuccess(_ thumbModel: ThumbModel) {
+    func dataDownloadDidSucceed(_ thumbModel: ThumbModel) {
         model.notifyDataDownloadSuccess(thumbModel)
         objectWillChange.send()
-        self.loadUpDownloaderWithTasks()
+        loadUpDownloaderWithTasks()
     }
     
-    func dataDownloadFailure(_ thumbModel: ThumbModel) {
+    func dataDownloadDidFail(_ thumbModel: ThumbModel) {
         model.notifyDataDownloadFailure(thumbModel)
         objectWillChange.send()
-        self.loadUpDownloaderWithTasks()
+        loadUpDownloaderWithTasks()
     }
+    
+    
+    
 }

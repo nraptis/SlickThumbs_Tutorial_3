@@ -15,7 +15,6 @@ struct ThumbView: View {
     let downloadDidSucceed: Bool
     let downloadDidFail: Bool
     
-    
     private static let tileBackground = RoundedRectangle(cornerRadius: 12)
     
     private func progressView() -> some View {
@@ -54,7 +53,7 @@ struct ThumbView: View {
                 .font(.system(size: 46).bold())
                 .foregroundColor(.white)
         }
-        .frame(width: CGFloat(width), height: height)
+        .frame(width: width, height: height)
         .background(Self.tileBackground.fill().foregroundColor(.red))
     }
     

@@ -7,6 +7,7 @@
 
 import Foundation
 
+// comes from mock web service
 struct ThumbModel {
     
     static func mock() -> ThumbModel {
@@ -17,6 +18,7 @@ struct ThumbModel {
     let image: String
 }
 
+// stores local data about web service object
 struct ThumbDownloadStatus {
     var downloadDidSucceed: Bool
     var downloadDidFail: Bool
